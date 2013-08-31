@@ -4,7 +4,7 @@ import play.Project._
 
 object ApplicationBuild extends Build {
 
-    val appName         = "appengine_proxy"
+    val appName         = "appengine-proxy"
     val appVersion      = "1.0"
 
     val appDependencies = Seq(
@@ -14,7 +14,9 @@ object ApplicationBuild extends Build {
       "org.apache.hadoop" % "hadoop-yarn-server-common" % "2.0.5-alpha",
       "org.apache.hadoop" % "hadoop-common" % "2.0.5-alpha",
       "org.apache.hadoop" % "hadoop-hdfs" % "2.0.5-alpha",
-      javaCore
+      javaCore,
+      javaJdbc,
+      javaEbean
     )
 
     val main = play.Project(appName, appVersion, appDependencies).settings(
@@ -22,3 +24,4 @@ object ApplicationBuild extends Build {
     )
 
 }
+            

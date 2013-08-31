@@ -1,0 +1,39 @@
+@(urls : Array[String])
+
+@header(key:String, title:String) = {
+    <th class="@key.replace(".","_") header">
+        @title
+    </th>
+}
+
+@main {
+
+    <div id="actions">
+        <a class="btn success" id="add" href="@routes.Application.create()">Add a new computer</a>
+    </div>
+        
+    <table class="computers zebra-striped">
+        <thead>
+            <tr>
+                @header("name", "Computer name")
+                @header("introduced", "Introduced")
+                @header("discontinued", "Discontinued")
+                @header("company.name", "Company")
+            </tr>
+        </thead>
+        <tbody>
+
+            @for(i <- 0 to (urls.length - 1)) {
+                <tr>
+                    <td><a href="@urls(i)">@urls(i)</a></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+            
