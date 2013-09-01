@@ -1,4 +1,4 @@
-@(computerForm: Form[Computer])
+@(appForm: Form[App])
 
 @import helper._
 
@@ -6,20 +6,18 @@
 
 @main {
     
-    <h1>Add a computer</h1>
+    <h1>Add an application</h1>
     
     @form(routes.Application.save()) {
         
         <fieldset>
         
-            @inputText(computerForm("name"), '_label -> "Computer name")
-            @inputText(computerForm("introduced"), '_label -> "Introduced date")
-            @inputText(computerForm("discontinued"), '_label -> "Discontinued date")
+            @inputText(appForm("name"), '_label -> "Application name")
 
             @select(
-                computerForm("company.id"), 
-                options(Company.options), 
-                '_label -> "Company", '_default -> "-- Choose a company --",
+                appForm("type"), 
+                options("PLDA" -> "PLDA", "GraphLab" -> "GraphLab"), 
+                '_label -> "Application Type", '_default -> "-- Choose a type --",
                 '_showConstraints -> false
             )
             

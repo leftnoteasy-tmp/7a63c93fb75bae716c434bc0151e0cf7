@@ -1,4 +1,4 @@
-@(urls : Array[String])
+@(names:Array[String], urls:Array[String], states:Array[String], types:Array[String])
 
 @header(key:String, title:String) = {
     <th class="@key.replace(".","_") header">
@@ -7,28 +7,29 @@
 }
 
 @main {
-
-    <div id="actions">
-        <a class="btn success" id="add" href="@routes.Application.create()">Add a new computer</a>
+    <div class="actions">
+        <a href="@routes.Application.create()" class="btn large primary">Add a new app</a> or
+        <a href="@routes.Application.result()" class="btn large primary">Checkout result</a> 
     </div>
-        
+
+    <h1>Applicatons</h1>
     <table class="computers zebra-striped">
         <thead>
             <tr>
-                @header("name", "Computer name")
-                @header("introduced", "Introduced")
-                @header("discontinued", "Discontinued")
-                @header("company.name", "Company")
+                @header("name", "Application name")
+                @header("url", "URL")
+                @header("apptype", "Type")
+                @header("state", "State")
             </tr>
         </thead>
         <tbody>
 
             @for(i <- 0 to (urls.length - 1)) {
                 <tr>
-                    <td><a href="@urls(i)">@urls(i)</a></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td>@names(i)</td>
+                    <td><a href="@urls(i)">link</a></td>
+                    <td>@types(i)</td>
+                    <td>@states(i)</td>
                 </tr>
             }
 

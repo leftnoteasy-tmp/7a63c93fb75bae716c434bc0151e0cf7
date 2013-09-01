@@ -17,7 +17,7 @@ import models.*;
  * Manage a database of computers
  */
 public class Application extends Controller {
-    static final String[] urls = new String[] { "xxx", "yyy" };
+    public static List<App> apps = new ArrayList<App>();
   
     /**
      * This result directly redirect to application home.
@@ -42,47 +42,33 @@ public class Application extends Controller {
      * @param filter Filter applied on computer names
      */
     public static Result list() {
-        return ok(
-            list.render(urls)
-        );
-    }
-    
-    /**
-     * Display the 'edit form' of a existing Computer.
-     *
-     * @param id Id of the computer to edit
-     */
-    public static Result edit(Long id) {
-        Form<Computer> computerForm = form(Computer.class).fill(
-            Computer.find.byId(id)
-        );
-        return ok(
-            editForm.render(id, computerForm)
-        );
-    }
-    
-    /**
-     * Handle the 'edit form' submission 
-     *
-     * @param id Id of the computer to edit
-     */
-    public static Result update(Long id) {
-        Form<Computer> computerForm = form(Computer.class).bindFromRequest();
-        if(computerForm.hasErrors()) {
-            return badRequest(editForm.render(id, computerForm));
+        String[] names = new String[apps.size()];
+        String[] urls = new String[apps.size()];
+        String[] states = new String[apps.size()];
+        String[] types = new String[apps.size()];
+        for (int i = 0; i < apps.size(); i++) {
+          names[i] = apps.get(i).name;
+          urls[i] = apps.get(i).url;
+          states[i] = apps.get(i).state.name();
+          types[i] = apps.get(i).type;
         }
-        computerForm.get().update(id);
-        flash("success", "Computer " + computerForm.get().name + " has been updated");
-        return GO_HOME;
+        
+        return ok(
+            list.render(names, urls, states, types)
+        );
+    }
+    
+    public static Result result() {
+      return GO_HOME;    
     }
     
     /**
      * Display the 'new computer form'.
      */
     public static Result create() {
-        Form<Computer> computerForm = form(Computer.class);
+        Form<App> appForm = form(App.class);
         return ok(
-            createForm.render(computerForm)
+            createForm.render(appForm)
         );
     }
     
@@ -90,26 +76,10 @@ public class Application extends Controller {
      * Handle the 'new computer form' submission 
      */
     public static Result save() {
-        Form<Computer> computerForm = form(Computer.class).bindFromRequest();
-        Computer c = computerForm.get();
-        System.out.println(c.name);
-//        if(computerForm.hasErrors()) {
-//            return badRequest(createForm.render(computerForm));
-//        }
-//        computerForm.get().save();
-//        flash("success", "Computer " + computerForm.get().name + " has been created");
+        Form<App> appForm = form(App.class).bindFromRequest();
+        App app = appForm.get();
+        apps.add(app);
         return GO_HOME;
     }
-    
-    /**
-     * Handle computer deletion
-     */
-    public static Result delete(Long id) {
-        Computer.find.ref(id).delete();
-        flash("success", "Computer has been deleted");
-        return GO_HOME;
-    }
-    
-
 }
             
