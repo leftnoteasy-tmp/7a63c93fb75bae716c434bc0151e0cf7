@@ -6,20 +6,14 @@
 
 @main {
     
-    <h1>Add an application</h1>
-    
-    @form(routes.Application.save()) {
+    @helper.form(routes.Application.save) {
         
+        <!--
         <fieldset>
         
             @inputText(appForm("name"), '_label -> "Application name")
 
-            @select(
-                appForm("type"), 
-                options("PLDA" -> "PLDA", "GraphLab" -> "GraphLab"), 
-                '_label -> "Application Type", '_default -> "-- Choose a type --",
-                '_showConstraints -> false
-            )
+
             
 
         </fieldset>
@@ -28,7 +22,32 @@
             <input type="submit" value="Create this computer" class="btn primary"> or 
             <a href="@routes.Application.list()" class="btn">Cancel</a> 
         </div>
-        
+        -->
+
+        <div class="container">
+            <p>
+                <h2>Add an application</h2>
+            </p>
+
+            <p>
+                <strong>Application Name: </strong> 
+                <input type="name" name="name" class="form-control" placeholder="Application name" value="@appForm("name").value">
+            </p>
+
+            <p>
+                @select(
+                    appForm("type"), 
+                    options("PLDA" -> "PLDA", "GraphLab" -> "GraphLab"), 
+                    '_label -> "Application Type", '_default -> "-- Choose a type --",
+                    '_showConstraints -> false
+                )
+            </p>
+
+            <p>
+                <button type="submit" class="btn btn-default">Submit</button>
+            </p>
+
+        </div>
     }
     
 }

@@ -5,17 +5,20 @@
     <head>
         <title>MLass platform (by Gibbs Sampling Team)</title>
         <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+        <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/bootstrap.css")">
         <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/main.css")"> 
     </head>
-    <body>
-        <header class="topbar">
-            <h1 class="fill">
-                <a href="@routes.Application.index()">
-                    Pivotal Hackday Application &mdash; MLaas Platform (by Gibbs Sampling Team)
-                </a>
-            </h1>
-        </header>
-        
+    
+        <div class="jumbotron">
+          <div class="container">
+            <h1>Hello, Machine Learning!</h1>
+            <p>Machine Learning as-a-service platform, powered by Gibbs Sampling Team, Pivotal</p>
+            <p>
+                <a href="@routes.Application.create()" class="btn btn-primary btn-lg">Add a new app</a>            
+            </p>
+          </div>
+        </div>
+
         <section id="main">
             @content
         </section>
