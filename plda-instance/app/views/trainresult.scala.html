@@ -1,0 +1,31 @@
+@(words:Array[String], width1:Array[Int], width2:Array[Int], width3:Array[Int])
+
+@main {
+
+    <div class="container">
+        <h1>Applicatons</h1>
+
+        @for(i <- 0 to (words.length - 1)) {
+            <p>
+                <div class="container">
+                    <p>
+                        <h3>@words(i)</h3>
+                    </p>
+                    <p>
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-success" style="width: @width1(i)%">
+                            <span class="sr-only">35% Complete (success)</span>
+                          </div>
+                          <div class="progress-bar progress-bar-warning" style="width: @width2(i)%">
+                            <span class="sr-only">20% Complete (warning)</span>
+                          </div>
+                          <div class="progress-bar progress-bar-danger" style="width: @width3(i)%">
+                            <span class="sr-only">10% Complete (danger)</span>
+                          </div>
+                        </div>
+                    </p>
+                </div>
+            </p>
+        }
+    </div>
+}

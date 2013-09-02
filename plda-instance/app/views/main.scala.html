@@ -1,0 +1,31 @@
+@(content: Html)
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MLass platform (by Gibbs Sampling Team)</title>
+        <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+        <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/bootstrap.css")">
+        <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/main.css")"> 
+    </head>
+    
+        <div class="jumbotron">
+          <div class="container">
+            <h1>Hello, Machine Learning!</h1>
+            <p>Machine Learning as-a-service platform, powered by Gibbs Sampling Team, Pivotal</p>
+            <p>
+                    <a href="@routes.Application.train()" class="btn btn-primary btn-lg">Train a model</a>  |  
+                    <a href="@routes.Application.getTrainResult()" class="btn btn-success btn-lg">Get train result</a>  |  
+                    <a href="@routes.Application.infer()" class="btn btn-primary btn-lg"> Infer a document</a>  |  
+                    <a href="@routes.Application.getInferResult()" class="btn btn-success btn-lg">Get infer result</a>
+            </p>
+            </p>
+          </div>
+        </div>
+
+        <section id="main">
+            @content
+        </section>
+        
+    </body>
+</html>
