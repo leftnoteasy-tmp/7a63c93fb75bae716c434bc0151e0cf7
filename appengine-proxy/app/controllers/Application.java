@@ -10,6 +10,7 @@ import static play.data.Form.*;
 import play.*;
 
 import views.html.*;
+import yarn.YarnHelper;
 
 import models.*;
 
@@ -77,8 +78,24 @@ public class Application extends Controller {
      */
     public static Result save() {
         Form<App> appForm = form(App.class).bindFromRequest();
-        App app = appForm.get();
+        final App app = appForm.get();
+        
+        // call AM allocate a container and run application
+        Thread newAppThread = new Thread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              YarnHelper.getInstance().runNewApp(app);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+          
+        });
+        newAppThread.start();
+        
         apps.add(app);
+        
         return GO_HOME;
     }
 }

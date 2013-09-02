@@ -12,7 +12,7 @@ import models.*;
 public class Global extends GlobalSettings {
   @Override
   public void onStart(Application app) {
-    if (false) {
+    if (true) {
       YarnHelper yarnHelper = YarnHelper.getInstance();
       try {
         yarnHelper.registerAM();

@@ -3,23 +3,27 @@
 @main {
 
     <div class="container">
-        <h1>Applicatons</h1>
+        <h2>Infer Result:</h2>
+
+        <p class="text-center">
+          <h3>Words:</h3>
+        </p>
 
         @for(i <- 0 to (words.length - 1)) {
             <p>
                 <div class="container">
                     <p>
-                        <h3>@words(i)</h3>
+                        <h4>@words(i)</h4>
                     </p>
                     <p>
                         <div class="progress">
                           <div class="progress-bar progress-bar-success" style="width: @width1(i)%">
                             <span class="sr-only">35% Complete (success)</span>
                           </div>
-                          <div class="progress-bar progress-bar-warning" style="width: @width2(i)%">
+                          <div class="progress-bar progress-bar-info" style="width: @width2(i)%">
                             <span class="sr-only">20% Complete (warning)</span>
                           </div>
-                          <div class="progress-bar progress-bar-danger" style="width: @width3(i)%">
+                          <div class="progress-bar progress-bar-warning" style="width: @width3(i)%">
                             <span class="sr-only">10% Complete (danger)</span>
                           </div>
                         </div>
