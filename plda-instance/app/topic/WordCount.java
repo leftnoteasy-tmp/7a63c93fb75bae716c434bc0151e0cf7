@@ -63,6 +63,9 @@ public class WordCount {
       if (trimed.isEmpty()) {
         continue;
       }
+      if (trimed.length() <= 3) {
+        continue;
+      }
       if (stopWords.contains(trimed)) {
         continue;
       } else {

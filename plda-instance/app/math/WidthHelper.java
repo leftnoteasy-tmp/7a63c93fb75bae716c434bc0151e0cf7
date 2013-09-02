@@ -30,6 +30,9 @@ public class WidthHelper {
    int[] results = new int[widths.size()];
    for (int i = 0; i < widths.size(); i++) {
      results[i] = (int) Math.round(widths.get(i) / perWidth);
+     if (results[i] <= 0) {
+       results[i] = 1;
+     }
    }
    
    return results;
@@ -86,6 +89,9 @@ public class WidthHelper {
       for (int j = 0; j < ws.getScores().size(); j++) {
         int score = ws.getScores().get(j);
         score = Math.round(score / perWidth);
+        if (score <= 0) {
+          score = 1;
+        }
         ws.getScores().set(j, score);
       }
     }

@@ -1,0 +1,9 @@
+#!/bin/bash
+PARAMS=$@
+
+YARNCLI_FULLPATH=$(which yarncli)
+YARNCLI_HOME=${YARNCLI_FULLPATH%/*}
+
+CLASSPATH=$HADOOP_CONF_DIR:$YARN_CONF_DIR:$HDFS_CONF_DIR:$YARNCLI_HOME/../lib/yarncli/*:$YARNCLI_HOME/../lib/yarncli/lib/*:$YARNCLI_HOME/../conf:$CLASSPATH
+echo $CLASSPATH
+java $JAVA_OPTS -cp $CLASSPATH com.pivotal.gibbs.cli.YarnCli $PARAMS

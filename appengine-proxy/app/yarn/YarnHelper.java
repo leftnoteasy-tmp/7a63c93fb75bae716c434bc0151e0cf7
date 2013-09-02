@@ -3,6 +3,7 @@ package yarn;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.net.NetUtils;
@@ -31,7 +33,6 @@ import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.api.ClientRMProtocol;
 import org.apache.hadoop.yarn.api.ContainerManager;
 import org.apache.hadoop.yarn.api.protocolrecords.AllocateRequest;
-import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationReportRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.GetContainerStatusRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.GetContainerStatusResponse;
 import org.apache.hadoop.yarn.api.protocolrecords.GetNewApplicationRequest;
@@ -39,10 +40,8 @@ import org.apache.hadoop.yarn.api.protocolrecords.GetNewApplicationResponse;
 import org.apache.hadoop.yarn.api.protocolrecords.RegisterApplicationMasterRequest;
 import org.apache.hadoop.yarn.api.protocolrecords.RegisterApplicationMasterResponse;
 import org.apache.hadoop.yarn.api.protocolrecords.StartContainerRequest;
-import org.apache.hadoop.yarn.api.protocolrecords.SubmitApplicationRequest;
 import org.apache.hadoop.yarn.api.records.ApplicationAttemptId;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.api.records.ApplicationSubmissionContext;
 import org.apache.hadoop.yarn.api.records.Container;
 import org.apache.hadoop.yarn.api.records.ContainerId;
@@ -55,7 +54,6 @@ import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
 import org.apache.hadoop.yarn.api.records.Priority;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.api.records.ResourceRequest;
-import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.factories.RecordFactory;
 import org.apache.hadoop.yarn.factory.providers.RecordFactoryProvider;
@@ -68,6 +66,7 @@ public class YarnHelper {
   private static final Log LOG = LogFactory.getLog(YarnHelper.class);
   private static YarnHelper instance = null;
   private static String FILE_UPLOAD_DIR = "app-engine";
+  private int responseId = 0;
   
   Configuration conf;
   RecordFactory recordFactory;
@@ -98,6 +97,24 @@ public class YarnHelper {
         rmAddress, conf));
   }
   
+  public static ApplicationAttemptId getAppAttemptIdFromEnv() {
+    ContainerId containerId = getContainerIdFromEnv();
+    if (containerId == null) {
+      return null;
+    }
+    return containerId.getApplicationAttemptId();
+  }
+  
+  public static ContainerId getContainerIdFromEnv() {
+    String containerIdStr =
+        System.getenv(ApplicationConstants.AM_CONTAINER_ID_ENV);
+    if (null == containerIdStr) {
+      return null;
+    }
+    ContainerId containerId = ConverterUtils.toContainerId(containerIdStr);
+    return containerId;
+  }
+  
   void getNewApplication() throws IOException {
     if (client == null) {
       throw new IOException("should initialize YARN client first.");
@@ -123,41 +140,6 @@ public class YarnHelper {
     val.setAMContainerSpec(ctx);
     
     return val;
-  }
-  
-  void submitApplication() throws InterruptedException, IOException {
-    if (client == null) {
-      throw new IOException("should initialize YARN client first.");
-    }
-    
-    // submit application
-    SubmitApplicationRequest submitRequest = recordFactory
-        .newRecordInstance(SubmitApplicationRequest.class);
-    ApplicationSubmissionContext submissionCtx = createAppSubmissionCtx();
-    submitRequest.setApplicationSubmissionContext(submissionCtx);
-    client.submitApplication(submitRequest);
-    
-    // query application until state changed
-    GetApplicationReportRequest reportRequest = recordFactory.newRecordInstance(GetApplicationReportRequest.class);
-    reportRequest.setApplicationId(appId);
-    ApplicationReport report;
-    YarnApplicationState state;
-    
-    while (true) {
-      report = client.getApplicationReport(reportRequest).getApplicationReport();
-      state = report.getYarnApplicationState();
-      boolean cont = false;
-      if (YarnApplicationState.NEW == state || YarnApplicationState.SUBMITTED == state) {
-        cont = true;
-      }
-      if (!cont) {
-        break;
-      }
-    }
-    
-    if (state != YarnApplicationState.ACCEPTED) {
-      throw new IOException("error state detected");
-    }
   }
 
   AMRMProtocol createSchedulerProxy() {
@@ -204,12 +186,12 @@ public class YarnHelper {
   void registerToRM() {
     try {
       RegisterApplicationMasterRequest request = recordFactory.newRecordInstance(RegisterApplicationMasterRequest.class);
-      attemptId = recordFactory.newRecordInstance(ApplicationAttemptId.class);
-      attemptId.setApplicationId(appId);
-      attemptId.setAttemptId(1);
+      attemptId = getAppAttemptIdFromEnv();
       request.setApplicationAttemptId(attemptId);
+      request.setTrackingUrl(InetAddress.getLocalHost().getHostName() + ":9000");
+      request.setHost(InetAddress.getLocalHost().getHostAddress());
+      request.setRpcPort(9000);
       RegisterApplicationMasterResponse response = scheduler.registerApplicationMaster(request);
-      System.out.println("######### response.max:" + response.getMaximumResourceCapability().getMemory());
     } catch (Exception e) {
       LOG.error("exception while registering:", e);
       throw new YarnException(e);
@@ -217,12 +199,8 @@ public class YarnHelper {
   }
   
   public void registerAM() throws IOException, InterruptedException {
-    getNewApplication();
-    submitApplication();
-    
     // get scheduler proxy
     scheduler = createSchedulerProxy();
-    System.out.println("############## scheduler is :" + (scheduler == null));
     
     // register To RM
     registerToRM();
@@ -233,12 +211,14 @@ public class YarnHelper {
 
     // make our allocate request
     AllocateRequest request = recordFactory.newRecordInstance(AllocateRequest.class);
+    request.setResponseId(responseId);
+    responseId++;
     request.setApplicationAttemptId(this.attemptId);
     ResourceRequest rr = recordFactory.newRecordInstance(ResourceRequest.class);
     rr.setHostName("*");
     Resource res = recordFactory.newRecordInstance(Resource.class);
     res.setMemory(1024);
-    res.setVirtualCores(0);
+    res.setVirtualCores(1);
     rr.setCapability(res);
     rr.setNumContainers(1);
     Priority pri = recordFactory.newRecordInstance(Priority.class);
@@ -256,6 +236,8 @@ public class YarnHelper {
     
     while (containers == null || containers.size() == 0) {
       Thread.sleep(500);
+      request.setResponseId(responseId);
+      responseId++;
       containers = scheduler.allocate(request).getAMResponse().getAllocatedContainers();
       System.out.println("allocate again ... ");
     }
@@ -297,14 +279,12 @@ public class YarnHelper {
   
   LocalResource createLocalResource(File archive) throws IOException {
     LocalResource res = recordFactory.newRecordInstance(LocalResource.class);
-    res.setSize(archive.length());
-    res.setTimestamp(archive.lastModified());
     res.setType(LocalResourceType.ARCHIVE);
     res.setVisibility(LocalResourceVisibility.PRIVATE);
     
     // upload file to HDFS
     FileSystem fs = FileSystem.get(conf);
-    Path path = new Path(FILE_UPLOAD_DIR, String.valueOf(new Random(System.currentTimeMillis()).nextLong()));
+    Path path = new Path("/tmp/" + FILE_UPLOAD_DIR, String.valueOf(new Random(System.currentTimeMillis()).nextLong()));
     fs.mkdirs(path);
     
     // file path
@@ -321,7 +301,10 @@ public class YarnHelper {
     fsOut.flush();
     fsOut.close();
     
-    res.setResource(ConverterUtils.getYarnUrlFromPath(path));
+    FileStatus fStatus = fs.getFileStatus(path);
+    res.setResource(ConverterUtils.getYarnUrlFromPath(fStatus.getPath()));
+    res.setTimestamp(fStatus.getModificationTime());
+    res.setSize(fStatus.getLen());
     return res;
   }
   
@@ -330,10 +313,17 @@ public class YarnHelper {
     
     // create and set launch context
     ContainerLaunchContext launchCtx = recordFactory.newRecordInstance(ContainerLaunchContext.class);
-    List<String> cmd = new ArrayList<String>();
+    List<String> cmds = new ArrayList<String>();
     
     // set command
-    cmd.add("HAHAH " + "1>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout 2>" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr");
+    String command = "cd plda-instance-1.0/plda-instance-1.0/ && sh start -DapplyEvolutions.default=true " + "-Dhttp.port=" + port + " 1>"
+        + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout 2>"
+        + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr";
+    
+    cmds.add(command);
+    
+    launchCtx.setUser(UserGroupInformation.getCurrentUser().getUserName());
+    launchCtx.setCommands(cmds);
     
     // set container-id
     launchCtx.setContainerId(container.getId());
@@ -344,7 +334,7 @@ public class YarnHelper {
     // set local resource
     LocalResource res = createLocalResource(archive);
     Map<String, LocalResource> localResources = new HashMap<String, LocalResource>();
-    localResources.put("app", res);
+    localResources.put("plda-instance-1.0", res);
     launchCtx.setLocalResources(localResources);
     
     // set resource will be used
@@ -356,7 +346,7 @@ public class YarnHelper {
   }
   
   void launchContainer(Container container, int port) throws IOException, InterruptedException {
-    String appArchivePath = System.getenv("APP_ARCHIVE_PATH");
+    String appArchivePath = System.getenv("APP_INSTANCE_ARCHIVE_PATH");
     if (null == appArchivePath) {
       throw new IOException("get app archive path failed");
     }
